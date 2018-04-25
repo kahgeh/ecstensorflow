@@ -1,0 +1,64 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  AppName:
+    Type : String
+  Image:
+    Type: String 
+  EcsClusterExportName:
+    Type: String
+Resources:
+  CloudwatchLogsGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['-', [!Ref AppName, !Ref 'AWS::StackName', lg ]]
+      RetentionInDays: 3
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        - Name: !Ref AppName
+          Essential: 'true'
+          Image: !Ref Image
+          Privileged: 'true'
+          Environment:
+            - Name:  PASSWORD
+              Value: xxxxxxx
+          Cpu: 128
+          MemoryReservation: 512  
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref 'CloudwatchLogsGroup'
+              awslogs-region: !Ref 'AWS::Region'
+              awslogs-stream-prefix: !Sub "ecs-${AppName}"
+          MountPoints:
+            - ContainerPath: /notebooks
+              SourceVolume: nbs-vol
+            - ContainerPath: /hostlib
+              SourceVolume: hostlib
+              ReadOnly: true
+            - ContainerPath: /hostusr
+              SourceVolume: hostusr
+              ReadOnly: true              
+          PortMappings:
+            - ContainerPort: 8888
+            - ContainerPort: 6006
+      Volumes:
+        - Name: nbs-vol
+          Host:
+            SourcePath: /notebooks
+        - Name: hostlib
+          Host:
+            SourcePath: /lib
+        - Name: hostusr
+          Host:
+            SourcePath: /usr        
+      NetworkMode: host
+  Service:
+    Type: 'AWS::ECS::Service'
+    Properties:
+      Cluster: 
+        Fn::ImportValue: !Ref EcsClusterExportName
+      DesiredCount: 1
+      TaskDefinition: !Ref TaskDefinition
+      ServiceName: !Ref AppName
