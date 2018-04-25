@@ -66,7 +66,7 @@ Kernel update necessitate a reboot. I am a novice in all things linux and aws, s
 1. gpuecsspotfleet.yml - Cloudformation script to create an ecs instance 
 2. Dockerfile - an example cuda/gpu aware container, this would be the application or the job and the image build from this should be made available in a docker repository
 3. service.yml - Cloudformation script to create a service (from an image built from the Dockerfile) and place it in the ecs cluster create by gpuecsspotfleet.yml
-
+4. gputest.ipynb - a jupyter notebook to verify that gpu is being used by the container 
 
 # Dependencies
 
